@@ -63,7 +63,10 @@ async function getLaunchOptions(): Promise<PuppeteerOptions> {
       '--no-zygote',
       '--single-process',
     ],
-    defaultViewport: chromium.defaultViewport,
+    defaultViewport: {
+      width: 1280,
+      height: 720,
+    },
   };
 }
 
