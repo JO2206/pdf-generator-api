@@ -9,11 +9,12 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@sparticuz/chromium": "^141.0.0",
+    "@sparticuz/chromium": "^126.0.0",
     "next": "16.0.5",
-    "puppeteer-core": "^24.31.0",
+    "puppeteer-core": "^22.12.1",
     "react": "19.2.0",
     "react-dom": "19.2.0",
+    "vercel": "^48.12.0",
     "zod": "^4.1.13"
   },
   "devDependencies": {
