@@ -11,7 +11,7 @@ export function validatePDFRequest(body: unknown) {
     return GeneratePDFRequestSchema.parse(body);
   } catch (error) {
     if (error instanceof ZodError) {
-      const details = error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+      const details = error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
       throw new Error(`Validation error: ${details}`);
     }
     throw error;
