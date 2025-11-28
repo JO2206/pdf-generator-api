@@ -1,5 +1,4 @@
 import puppeteer, { Browser, Page } from 'puppeteer-core';
-import chromium from '@sparticuz/chromium';
 import { PuppeteerOptions } from './types';
 
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -7,62 +6,58 @@ const isLocal = process.env.IS_LOCAL === 'true';
 
 /**
  * Get Chromium executable path based on environment
- * - Local development: Uses puppeteer's bundled Chromium
- * - Vercel production: Uses @sparticuz/chromium
+ * - Local development: Uses system Chrome
+ * - Railway/Docker production: Uses system Chromium from Dockerfile
  */
-async function getExecutablePath(): Promise<string> {
+function getExecutablePath(): string {
+  // Check if PUPPETEER_EXECUTABLE_PATH is set (from Dockerfile)
+  if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+    return process.env.PUPPETEER_EXECUTABLE_PATH;
+  }
+
+  // Local development paths
   if (isDevelopment || isLocal) {
-    // For local development, use custom path if set, otherwise use common Chrome locations
     if (process.env.CHROME_EXECUTABLE_PATH) {
       return process.env.CHROME_EXECUTABLE_PATH;
     }
-
-    // Return macOS default (will work on macOS, users on other platforms should set CHROME_EXECUTABLE_PATH)
+    // Return macOS default
     return '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
   }
 
-  // For Vercel/serverless, use @sparticuz/chromium
-  return await chromium.executablePath();
+  // Fallback to common Chromium locations in Docker
+  return '/usr/bin/chromium';
 }
 
 /**
  * Get Puppeteer launch options optimized for environment
  */
-async function getLaunchOptions(): Promise<PuppeteerOptions> {
-  const executablePath = await getExecutablePath();
+function getLaunchOptions(): PuppeteerOptions {
+  const executablePath = getExecutablePath();
 
-  if (isDevelopment || isLocal) {
-    return {
-      headless: true,
-      executablePath,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-      ],
-      defaultViewport: {
-        width: 1280,
-        height: 720,
-      },
-    };
-  }
+  // Common args for all environments
+  const commonArgs = [
+    '--no-sandbox',
+    '--disable-setuid-sandbox',
+    '--disable-dev-shm-usage',
+    '--disable-accelerated-2d-canvas',
+    '--disable-gpu',
+    '--hide-scrollbars',
+  ];
 
-  // Vercel/serverless optimized settings
+  // Production-specific args (Docker/Railway)
+  const productionArgs = [
+    '--no-first-run',
+    '--no-zygote',
+    '--single-process',
+    '--disable-features=IsolateOrigins,site-per-process',
+  ];
+
+  const args = isDevelopment || isLocal ? commonArgs : [...commonArgs, ...productionArgs];
+
   return {
     headless: true,
     executablePath,
-    args: [
-      ...chromium.args,
-      '--hide-scrollbars',
-      '--disable-web-security',
-      '--disable-features=IsolateOrigins,site-per-process',
-      '--disable-dev-shm-usage',
-      '--disable-accelerated-2d-canvas',
-      '--disable-gpu',
-      '--no-first-run',
-      '--no-zygote',
-      '--single-process',
-    ],
+    args,
     defaultViewport: {
       width: 1280,
       height: 720,
@@ -75,7 +70,7 @@ async function getLaunchOptions(): Promise<PuppeteerOptions> {
  * Handles environment-specific configuration
  */
 export async function launchBrowser(): Promise<Browser> {
-  const options = await getLaunchOptions();
+  const options = getLaunchOptions();
 
   try {
     const browser = await puppeteer.launch(options);

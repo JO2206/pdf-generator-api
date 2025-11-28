@@ -76,10 +76,28 @@ curl ... | jq -r '.pdfBase64' | base64 -d > output.pdf
 ```
 
 ### Deployment Notes
-- Vercel Hobby plan: 10s timeout limit (configured in vercel.json)
-- Memory limit: 250MB (code pre-validates HTML size to stay under 200MB)
-- Uses @sparticuz/chromium (actively maintained, replaces deprecated chrome-aws-lambda)
-- Environment-aware browser launching (local Chrome vs serverless Chromium)
+- **Platform**: Railway.app (uses Docker for full Chromium support)
+- **Why Railway**: Vercel's serverless environment doesn't support Puppeteer/Chromium dependencies
+- Uses system Chromium installed via Dockerfile
+- Environment-aware browser launching (local Chrome vs Docker Chromium)
+- Dockerfile installs all required system libraries for Chromium
+
+### Deploying to Railway
+```bash
+# 1. Push code to GitHub
+git push origin main
+
+# 2. Connect to Railway
+# - Go to railway.app
+# - Create new project from GitHub repo
+# - Railway auto-detects Dockerfile
+# - Set environment variable: API_KEY=your-secret-key
+
+# 3. Railway will automatically:
+# - Build Docker image
+# - Install Chromium and dependencies
+# - Deploy the application
+```
 
 ## Notes
 - This project uses Next.js App Router (not Pages Router)
