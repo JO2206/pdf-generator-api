@@ -5,6 +5,12 @@ import { PuppeteerOptions } from './types';
 const isDevelopment = process.env.NODE_ENV === 'development';
 const isLocal = process.env.IS_LOCAL === 'true';
 
+// Configure chromium for serverless environment
+if (!isDevelopment && !isLocal) {
+  // Disable graphics mode for serverless (prevents brotli file issues)
+  chromium.setGraphicsMode = false;
+}
+
 /**
  * Get Chromium executable path based on environment
  * - Local development: Uses puppeteer's bundled Chromium
@@ -22,7 +28,8 @@ async function getExecutablePath(): Promise<string> {
   }
 
   // For Vercel/serverless, use @sparticuz/chromium
-  return await chromium.executablePath();
+  // Use executablePath with explicit config to avoid brotli issues
+  return await chromium.executablePath('/tmp');
 }
 
 /**
